@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { v4 } from "uuid";
+import { useImmer } from "use-immer";
 
 function TodoItem({
 	listId,
@@ -83,55 +84,43 @@ function TodoList({
 }
 
 function TodoApp() {
-	const [todoLists, setTodoLists] = useState([]);
+	const [todoLists, setTodoLists] = useImmer([]);
 	const listTitleInputRef = useRef();
 
 	const removeTodoList = function (listId) {
-		setTodoLists((prev) => prev.filter((list) => list.id !== listId));
+		setTodoLists((draft) => {
+			const index = draft.findIndex((list) => list.id === listId);
+			if (index !== -1) {
+				draft.splice(index, 1);
+			}
+		});
 	};
 
 	const addTodoToList = function (listId, todo) {
-		setTodoLists((prev) =>
-			prev.map((list) => {
-				if (list.id === listId) {
-					return { ...list, todos: [...list.todos, todo] }; // 리렌더링을 하기 위해
-				}
-				return list;
-			})
-		);
+		setTodoLists((draft) => {
+			const index = draft.findIndex((list) => list.id === listId);
+			draft[index].todos.push(todo);
+		});
 	};
 
 	const removeTodoFromTodoList = function (listId, todoId) {
-		setTodoLists((prev) =>
-			prev.map((list) => {
-				if (list.id === listId) {
-					return {
-						...list,
-						todos: list.todos.filter((todo) => todo.id !== todoId),
-					};
-				}
-				return list;
-			})
-		);
+		setTodoLists((draft) => {
+			const list = draft.find((list) => list.id === listId);
+			if (list) {
+				list.todos = list.todos.filter((todo) => todo.id !== todoId);
+			}
+		});
 	};
 
 	const toggleCompletionFromTodoList = function (listId, todoId) {
-		setTodoLists((prev) => {
-			return prev.map((list) => {
-				if (list.id === listId) {
-					return {
-						...list,
-						todos: list.todos.map((todo) => {
-							if (todo.id === todoId) {
-								return {
-									...todo,
-									done: !todo.done,
-								};
-							}
-						}),
-					};
+		setTodoLists((draft) => {
+			const list = draft.find((list) => list.id === listId);
+			if (list) {
+				const todo = list.todos.find((todo) => todo.id === todoId);
+				if (todo) {
+					todo.done = !todo.done;
 				}
-			});
+			}
 		});
 	};
 
