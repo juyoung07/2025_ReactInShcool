@@ -1,7 +1,44 @@
 import { useState, useRef } from "react";
 import { v4 } from "uuid";
 
-function TodoList({ id, title, todos, removeTodoList, addTodoToList }) {
+function TodoItem({
+	listId,
+	id,
+	title,
+	done,
+	removeFromTodoList,
+	toggleCompletionFromTodoList,
+}) {
+	return (
+		<div>
+			<span
+				style={done ? { textDecoration: "line-through" } : {}}
+				onClick={() => {
+					toggleCompletionFromTodoList(listId, id);
+				}}
+			>
+				{title}
+			</span>
+			<button
+				onClick={() => {
+					removeFromTodoList(listId, id);
+				}}
+			>
+				삭제
+			</button>
+		</div>
+	);
+}
+
+function TodoList({
+	id,
+	title,
+	todos,
+	removeTodoList,
+	addTodoToList,
+	toggleCompletionFromTodoList,
+	removeFromTodoList,
+}) {
 	// 제어 컴포넌트와 비제어 컴포넌트의 개념
 	const [todoTitle, setTodoTitle] = useState("");
 
@@ -30,7 +67,15 @@ function TodoList({ id, title, todos, removeTodoList, addTodoToList }) {
 			<button onClick={() => removeTodoList(id)}>리스트 삭제</button>
 			<div>
 				{todos.map((todo) => (
-					<h2>{todo.title}</h2>
+					<TodoItem
+						key={todo.id}
+						listId={id}
+						{...todo}
+						removeFromTodoList={removeFromTodoList}
+						toggleCompletionFromTodoList={
+							toggleCompletionFromTodoList
+						}
+					/>
 				))}
 			</div>
 		</div>
@@ -49,11 +94,45 @@ function TodoApp() {
 		setTodoLists((prev) =>
 			prev.map((list) => {
 				if (list.id === listId) {
-					return { ...list, todos: [...list.todos, todo] };
+					return { ...list, todos: [...list.todos, todo] }; // 리렌더링을 하기 위해
 				}
 				return list;
 			})
 		);
+	};
+
+	const removeTodoFromTodoList = function (listId, todoId) {
+		setTodoLists((prev) =>
+			prev.map((list) => {
+				if (list.id === listId) {
+					return {
+						...list,
+						todos: list.todos.filter((todo) => todo.id !== todoId),
+					};
+				}
+				return list;
+			})
+		);
+	};
+
+	const toggleCompletionFromTodoList = function (listId, todoId) {
+		setTodoLists((prev) => {
+			return prev.map((list) => {
+				if (list.id === listId) {
+					return {
+						...list,
+						todos: list.todos.map((todo) => {
+							if (todo.id === todoId) {
+								return {
+									...todo,
+									done: !todo.done,
+								};
+							}
+						}),
+					};
+				}
+			});
+		});
 	};
 
 	return (
@@ -92,6 +171,10 @@ function TodoApp() {
 							{...list}
 							removeTodoList={removeTodoList}
 							addTodoToList={addTodoToList}
+							removeFromTodoList={removeTodoFromTodoList}
+							toggleCompletionFromTodoList={
+								toggleCompletionFromTodoList
+							}
 						/>
 					);
 				})}
