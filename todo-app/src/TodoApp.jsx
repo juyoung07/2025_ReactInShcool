@@ -98,8 +98,10 @@ function TodoApp() {
 
 	const addTodoToList = function (listId, todo) {
 		setTodoLists((draft) => {
-			const index = draft.findIndex((list) => list.id === listId);
-			draft[index].todos.push(todo);
+			// const index = draft.findIndex((list) => list.id === listId);
+			// draft[index].todos.push(todo);
+			const list = draft.find((list) => list.id === listId);
+			list.todos.push(todo);
 		});
 	};
 
