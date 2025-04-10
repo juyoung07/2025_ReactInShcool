@@ -1,90 +1,17 @@
-import { useState, useRef } from "react";
+import { useRef, useEffect } from "react";
 import { v4 } from "uuid";
-import { useImmer } from "use-immer";
-
-function TodoItem({
-	listId,
-	id,
-	title,
-	done,
-	removeFromTodoList,
-	toggleCompletionFromTodoList,
-}) {
-	return (
-		<div>
-			<span
-				style={done ? { textDecoration: "line-through" } : {}}
-				onClick={() => {
-					toggleCompletionFromTodoList(listId, id);
-				}}
-			>
-				{title}
-			</span>
-			<button
-				onClick={() => {
-					removeFromTodoList(listId, id);
-				}}
-			>
-				삭제
-			</button>
-		</div>
-	);
-}
-
-function TodoList({
-	id,
-	title,
-	todos,
-	removeTodoList,
-	addTodoToList,
-	toggleCompletionFromTodoList,
-	removeFromTodoList,
-}) {
-	// 제어 컴포넌트와 비제어 컴포넌트의 개념
-	const [todoTitle, setTodoTitle] = useState("");
-
-	return (
-		<div>
-			<h2>{title}</h2>
-			<input
-				value={todoTitle}
-				onChange={(e) => setTodoTitle(e.target.value)} // target은 input.. 제어 컴포넌트를 만들엇다!
-				type="text"
-				placeholder="할 일을 입력하세요."
-			/>
-			<button
-				onClick={() => {
-					addTodoToList(id, {
-						id: v4(),
-						title: todoTitle,
-						done: false,
-					});
-					setTodoTitle("");
-				}}
-			>
-				할 일 추가
-			</button>
-			<hr style={{ color: "grey" }} />
-			<button onClick={() => removeTodoList(id)}>리스트 삭제</button>
-			<div>
-				{todos.map((todo) => (
-					<TodoItem
-						key={todo.id}
-						listId={id}
-						{...todo}
-						removeFromTodoList={removeFromTodoList}
-						toggleCompletionFromTodoList={
-							toggleCompletionFromTodoList
-						}
-					/>
-				))}
-			</div>
-		</div>
-	);
-}
+import TodoList from "./components/TodoList";
+import { usePersistentTodoLists } from "./hooks";
+import {
+	AppContainer,
+	AddListButton,
+	ListTitleInput,
+	ListsContainer,
+	TodoListContainer,
+} from "./styles";
 
 function TodoApp() {
-	const [todoLists, setTodoLists] = useImmer([]);
+	const [todoLists, setTodoLists] = usePersistentTodoLists();
 	const listTitleInputRef = useRef();
 
 	const removeTodoList = function (listId) {
@@ -127,17 +54,21 @@ function TodoApp() {
 	};
 
 	return (
-		<div>
+		<AppContainer>
 			<h1>Todo List</h1>
-			<input
+			<ListTitleInput
 				ref={listTitleInputRef}
 				type="text"
 				placeholder="새로운 리스트의 제목을 입력하세요."
 			/>
-			<button
+			<AddListButton
 				onClick={() => {
 					const title = listTitleInputRef.current.value;
 					if (title.trim().length !== 0) {
+						if (todoLists.length >= 4) {
+							alert("리스트의 최대 개수는 4개입니다.");
+							return; // early return
+						}
 						setTodoLists((prev) => [
 							...prev,
 							{
@@ -153,24 +84,26 @@ function TodoApp() {
 				}}
 			>
 				리스트 추가
-			</button>
-			<div>
+			</AddListButton>
+			<ListsContainer>
 				{todoLists.map((list) => {
 					return (
-						<TodoList
-							key={list.id}
-							{...list}
-							removeTodoList={removeTodoList}
-							addTodoToList={addTodoToList}
-							removeFromTodoList={removeTodoFromTodoList}
-							toggleCompletionFromTodoList={
-								toggleCompletionFromTodoList
-							}
-						/>
+						<TodoListContainer>
+							<TodoList
+								key={list.id}
+								{...list}
+								removeTodoList={removeTodoList}
+								addTodoToList={addTodoToList}
+								removeFromTodoList={removeTodoFromTodoList}
+								toggleCompletionFromTodoList={
+									toggleCompletionFromTodoList
+								}
+							/>
+						</TodoListContainer>
 					);
 				})}
-			</div>
-		</div>
+			</ListsContainer>
+		</AppContainer>
 	);
 }
 
