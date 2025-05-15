@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 type Quiz = {
 	id: string;
@@ -13,17 +14,23 @@ const fetchQuizzes = async () => {
 		const response = await axios.get<Quiz[]>("/api/quizzes");
 		return response.data;
 	} catch (e) {
-		console.error("퀴즈 데ㅣㅇ터를 가져오는 중 오류 발생 : ", e);
+		console.error("퀴즈 데이터를 가져오는 중 오류 발생 : ", e);
 		throw e;
 	}
 };
 
 const deleteQuiz = async (id: string) => {
-	await axios.delete(`/api/quizzes/${id}`);
+	try {
+		await axios.delete(`/api/quizzes/${id}`);
+	} catch (e) {
+		console.error("퀴즈 삭제 중 오류 발생 : ", e);
+		throw e;
+	}
 };
 
 export default function ManageQuiz() {
 	const [quizzes, setQuizzes] = useState<Quiz[] | null>(null); // null말고 빈 배열도 가능
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		// useEffect는 바로 리턴해줘야 함
@@ -36,7 +43,7 @@ export default function ManageQuiz() {
 	return (
 		<div>
 			<h1>퀴즈 관리</h1>
-			<button>새 퀴즈 생성</button>
+			<button onClick={() => navigate("/create")}>새 퀴즈 생성</button>
 			{quizzes?.map((q) => (
 				<div key={q.id}>
 					<h3>{q.question}</h3>
